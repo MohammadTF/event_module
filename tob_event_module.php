@@ -35,7 +35,7 @@ function create_movie_review() {
             'menu_position' => 15,
             'supports' => array( 'title', 'editor', 'comments', 'thumbnail' ), /*  'custom-fields' */
             'taxonomies' => array( '' ),
-            'menu_icon' => plugins_url( 'images/image.png', __FILE__ ),
+            //'menu_icon' => plugins_url( 'image/image.jpg', __FILE__ ),
             'has_archive' => true
         )
     );
