@@ -36,6 +36,7 @@ class Tob_Events_Custom_Post_Type
 	public $custom_fields    = [];
 	public $table_columns    = [];
 	public $single_template  = '';
+	public $output_meta		 = '';
      
     /* Class constructor */
     public function __construct($name,$args = array(), $labels = array() )
@@ -306,17 +307,23 @@ class Tob_Events_Custom_Post_Type
 	         
 	        // Make the fields global
 	        
-			$this->$custom_fields[$title] = $fields;
+			$this->custom_fields[$title] = $fields;
 			
+			// $template_metabox = 'renderMetaBox';
+
+			// if($include_fields)
+			// {
+			// 	$template_metabox = 'renderInputBox';
+			// }
 		
 			
-	        add_action( 'admin_init',
+	        add_action( 'add_meta_boxes',
 			    function() use( $box_id, $box_title, $post_type_name, $box_context, $box_priority, $fields )
 			    {
 			        add_meta_box(
 			            $box_id,
 			            $box_title,
-			           array(&$this,'renderMetaBox'),
+			          	array(&$this,'renderInputBox'),
 			            $post_type_name,
 			            $box_context,
 			            $box_priority,
@@ -327,8 +334,90 @@ class Tob_Events_Custom_Post_Type
 	    }
          
     }
+
+      public function add_meta_box_output($title, $fields = array(), $context = 'normal', $priority = 'default')
+    {
+    	if( ! empty( $title ) )
+	    {
+	        // We need to know the Post Type name again
+	        $post_type_name = $this->post_type_name;
+	 
+	        // Meta variables
+	        $box_id         = Tob_Events_String::uglify( $title ) ;
+	        $box_title      = Tob_Events_String::beautify( $title );
+	        $box_context    = $context;
+	        $box_priority   = $priority;
+	         
+	        // Make the fields global
+	        
+			$this->custom_fields[$title] = $fields;
+			
+			// $template_metabox = 'renderMetaBox';
+
+			// if($include_fields)
+			// {
+			// 	$template_metabox = 'renderInputBox';
+			// }
+		
+			
+	        add_action( 'add_meta_boxes',
+			    function() use( $box_id, $box_title, $post_type_name, $box_context, $box_priority, $fields )
+			    {
+			        add_meta_box(
+			            $box_id,
+			            $box_title,
+			          	array(&$this,'renderMetaBox'),
+			            $post_type_name,
+			            $box_context,
+			            $box_priority,
+			            array( $fields )
+			        );
+			    }
+			);
+	    }
+         
+    }
+    public function setOutputMeta($meta_field)
+    {
+    	$this->output_meta = $meta_field;
+    	return $this;
+    }
+    public function getOutputMeta()
+    {
+    	
+    	return $this->output_meta;
+    }
+    public function renderMetaBox($post, $data )
+	{
+		
+			global $post;
+			 
+			// Nonce field for some validation
+			wp_nonce_field( plugin_basename( __FILE__ ), 'custom_post_type' );
+			 
+			// Get the saved values
+			$meta = $this->getOutputMeta();
+			if(empty($meta))
+			{
+				$meta = get_post_custom( $post->ID );				
+			}
+			 
+			// Check the array and loop through it
+			if( ! empty( $meta ) )
+			{
+				/* Loop through $this->custom_fields */
+				foreach( $meta as $label => $type )
+				{
+					print_r($type);
+					
+				
+				}
+			}
+		 
+		
+	}
 	
-	public function renderMetaBox($post, $data )
+	public function renderInputBox($post, $data )
 	{
 		
 			global $post;
@@ -337,22 +426,36 @@ class Tob_Events_Custom_Post_Type
 			wp_nonce_field( plugin_basename( __FILE__ ), 'custom_post_type' );
 			 
 			// Get all inputs from $data
-			$this->$custom_fields = $data['args'][0];
+			$this->custom_fields = $data['args'][0];
 			 
 			// Get the saved values
 			$meta = get_post_custom( $post->ID );
 			 
 			// Check the array and loop through it
-			if( ! empty( $this->$custom_fields ) )
+			if( ! empty( $this->custom_fields ) )
 			{
-				/* Loop through $this->$custom_fields */
-				foreach( $this->$custom_fields as $label => $type )
+				/* Loop through $this->custom_fields */
+				foreach( $this->custom_fields as $label => $type )
 				{
 
 					
-					$field_id_name  = strtolower( str_replace( ' ', '_', $data['id'] ) ) . '_' . strtolower( str_replace( ' ', '_', $label ) );
-					 
-					echo '<label for="' . $field_id_name . '">' . $label . '</label><input type="text" name="custom_meta[' . $field_id_name . ']" id="' . $field_id_name . '" value="' . $meta[$field_id_name][0] . '" />';
+					$field_id_name  = Tob_Events_String::uglify($data['id']).
+					'_' . Tob_Events_String::uglify($label)  ;
+					
+					switch($type['type'])
+					{
+						case 'text':
+							echo '<label for="' . $field_id_name . '">' . $label . '</label><input type="text" name="custom_meta[' . $field_id_name . ']" id="' . $field_id_name . '" value="' . $meta[$field_id_name][0] . '" />';
+						
+						break;
+						case 'dropdown':
+							echo '<select name="list_events">';
+							foreach ($type['default'] as $key => $value) {
+								echo '<option value="'.$value->ID.'">'.$value->post_title.'</option>';
+							}
+							echo '</select>';
+						default;
+					}
 				}
 			}
 		 
@@ -378,12 +481,13 @@ class Tob_Events_Custom_Post_Type
 		                
 		                 
 		                // Loop through each meta box
-		                foreach( $this->$custom_fields as $title => $fields )
+		                foreach( $this->custom_fields as $title => $fields )
 		                {
 		                    // Loop through all fields
 		                    foreach( $fields as $label => $type )
 		                    {
-		                        $field_id_name  = strtolower( str_replace( ' ', '_', $title ) ) . '_' . strtolower( str_replace( ' ', '_', $label ) );
+		                        $field_id_name  = Tob_Events_String::uglify($data['id']).
+										'_' . Tob_Events_String::uglify($label)  ;
 		                         
 		                        update_post_meta( $post->ID, $field_id_name, $_POST['custom_meta'][$field_id_name] );
 		                    }

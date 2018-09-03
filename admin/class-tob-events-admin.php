@@ -64,26 +64,29 @@ class Tob_Events_Admin {
 	
 	private function add_post_types()
 	{
-		$book = new Tob_Events_Custom_Post_Type( 'Book' );
-		$book->add_taxonomy( 'category' );
-		$book->add_taxonomy( 'author' );
-		
-		$book->add_meta_box( 
-			'Book Info', 
-			array(
-				'Year' => 'text',
-				'Genre' => 'text'
-			)
+		$event   = new Tob_Events_Custom_Post_Type( 'Event' );
+
+		$event->setOutputMeta('list_packages'); 
+		$event->add_meta_box( 
+		    'List Packages'
+		    		    
 		);
 		
-		$book->add_meta_box( 
-			'Author Info', 
-			array(
-				'Name' => 'text',
-				'Nationality' => 'text',
-				'Birthday' => 'text'
-			)
+ 
+
+		$package = new Tob_Events_Custom_Post_Type( 'Package' );
+		$args = array("post_type"        => "event","post_status"      => "publish");
+		$posts_array = get_posts($args);
+		$package->add_meta_box( 
+		    'Associate Event',		    
+		     array(
+		        'Events' => ['type'=>'dropdown','default'=>$posts_array],
+	   		 )		    
 		);
+
+		$varient = new Tob_Events_Custom_Post_Type( 'Varient' );
+
+		
 	}
 
 	/**
