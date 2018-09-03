@@ -16,15 +16,15 @@ class WP_Supports
 								'post-formats', //(see Post_Formats)
 						    ];
     
-    public function show_list()
+    public function get()
     {
         return $this->list_support;
     }
-    public function add_item($item)
+    public function add($item)
     {
         $this->list_support[] = item;
     }
-    public function remove_item($item)
+    public function remove($item)
     {
         if($i = array_search($item, $this->list_support) !== FALSE)
         {

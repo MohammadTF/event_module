@@ -1,6 +1,6 @@
 <?php
 
-class WP_Label{
+class WPLabel{
 
 	protected $name;
 	protected $singular_name;
@@ -18,7 +18,7 @@ class WP_Label{
 
 	public function __construct($post_type)
 	{
-		$beautify_name = Helper::beautify($post_type);
+		$beautify_name = StringHelper::beautify($post_type);
 
 		$this->setName($beautify_name);
 		$this->setSingularName($beautify_name);
@@ -42,6 +42,10 @@ class WP_Label{
 		$this->setParent('Parent '.$beautify_name);
 	}
 
+    public function get()
+    {
+        return get_object_vars($this);        
+    }
 
     /**
      * @return mixed
